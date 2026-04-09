@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Engine de Saúde Masculina v1</title>
+<title>Engine de Saúde Masculina v3</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
 <style>
@@ -164,12 +164,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);font
     <div>
       <div class="hdr-badge">Engine de Mapeamento · Saúde Masculina v3</div>
       <h1>Inferência de saúde<br><em>por cobertura ponderada</em></h1>
-      <p>Selecione o <strong>resultado</strong> de cada dado — não apenas se existe. Dados em faixa de risco contribuem 100% do peso; dados normais contribuem 30% (presente mas não fator de risco).</p>
+      <p>Selecione o <strong>resultado</strong> de cada dado. O engine calcula a prioridade de atenção clínica para cada dimensão do perfil de saúde masculina.</p>
     </div>
     <div class="hdr-formula">
       <div class="eq">C<sub>m</sub> = &Sigma;(w<sub>i</sub>&middot;&alpha;<sub>i</sub>) / &Sigma;w<sub>i</sub></div>
       <div>&alpha; = 1,0 se em risco &middot; 0,3 se normal &middot; 0 se não informado</div>
-      <div style="margin-top:.4rem;opacity:.7">Honestidade epistêmica sobre resultado, não só presença</div>
+      <div style="margin-top:.4rem;opacity:.7">Resultado clínico informado, não só presença do dado</div>
     </div>
   </div>
 </div>
@@ -932,9 +932,9 @@ function presetSaude(){
 // ══════════════════════════════════════════════════════════════════
 function covColor(p){ return p>=75?'#15803d':p>=45?'#92400e':'#be123c'; }
 function riskBadge(p){
-  if(p>=75) return {cls:'rb-low',txt:'✓ Alta cobertura'};
-  if(p>=45) return {cls:'rb-mod',txt:'⚠ Cobertura parcial'};
-  return {cls:'rb-high',txt:'⬇ Cobertura baixa'};
+  if(p>=75) return {cls:'rb-low',txt:'● Alta prioridade'};
+  if(p>=45) return {cls:'rb-mod',txt:'● Média prioridade'};
+  return {cls:'rb-high',txt:'● Baixa prioridade'};
 }
 function lvlBadge(n){ return n==='N1'?'pill-n1':n==='N2'?'pill-n2':'pill-n3'; }
 function lvlCls(id){ return N1_IDX[id]?'chain-n1':N2_IDX[id]?'chain-n2':'chain-n3'; }
@@ -1021,11 +1021,11 @@ function calcular(){
   const totalInformados=estadoAtual.size;
   const emRisco=[...estadoAtual.values()].filter(e=>e.risco).length;
 
-  let html=`<div class="disclaimer"><strong>⚠ Instrumento de triagem:</strong> Cobertura pondera os dados pelo resultado informado — não é diagnóstico nem probabilidade de doença. Resultados devem ser interpretados por profissional de saúde habilitado. CFM Res. 2.314/2022 e LGPD (Lei 13.709/2018).</div>
+  let html=`<div class="disclaimer"><strong>⚠ Instrumento de triagem:</strong> Prioridade indica o grau de fundamentação clínica de cada inferência — não é diagnóstico nem probabilidade de doença. Resultados devem ser interpretados por profissional de saúde habilitado. CFM Res. 2.314/2022 e LGPD (Lei 13.709/2018).</div>
   <div class="results-meta">
     <div>
       <div class="rm-title">Inferências calculadas</div>
-      <div class="rm-sub">${totalInformados} dados informados (${emRisco} em faixa de risco) → ${a1.length} N1 · ${a2.length} N2 · ${a3.length} N3 ativos</div>
+      <div class="rm-sub">${totalInformados} dados informados · ${emRisco} em faixa de risco → ${a1.length+a2.length+a3.length} inferências ativas</div>
     </div>
     <div class="rm-pills">
       <span class="rm-pill pill-n1">${a1.length} N1</span>
@@ -1034,9 +1034,9 @@ function calcular(){
     </div>
   </div>`;
 
-  if(a1.length){ html+=`<div class="sec-label" style="background:var(--blue-l);color:var(--blue-d)">N1 — Inferências primárias</div>`; a1.forEach(m=>{ html+=renderCard(m,Math.round(c1[m.id]*100),covs); }); }
-  if(a2.length){ html+=`<div class="sec-label" style="background:var(--purple-l);color:var(--purple)">N2 — Inferências compostas</div>`; a2.forEach(m=>{ html+=renderCard(m,Math.round(c2[m.id]*100),covs); }); }
-  if(a3.length){ html+=`<div class="sec-label" style="background:var(--orange-l);color:var(--orange)">N3 — Meta-inferências</div>`; a3.forEach(m=>{ html+=renderCard(m,Math.round(c3[m.id]*100),covs); }); }
+  if(a1.length){ html+=`<div class="sec-label" style="background:var(--blue-l);color:var(--blue-d)">Inferências primárias</div>`; a1.forEach(m=>{ html+=renderCard(m,Math.round(c1[m.id]*100),covs); }); }
+  if(a2.length){ html+=`<div class="sec-label" style="background:var(--purple-l);color:var(--purple)">Inferências compostas</div>`; a2.forEach(m=>{ html+=renderCard(m,Math.round(c2[m.id]*100),covs); }); }
+  if(a3.length){ html+=`<div class="sec-label" style="background:var(--orange-l);color:var(--orange)">Síntese clínica integrada</div>`; a3.forEach(m=>{ html+=renderCard(m,Math.round(c3[m.id]*100),covs); }); }
 
   if(!a1.length&&!a2.length&&!a3.length) html+=`<div class="empty-state"><div class="es-icon">🔍</div><h3>Nenhuma inferência ativa</h3><p>Selecione dados em faixa de risco ou normal para ativar os modelos.</p></div>`;
 
